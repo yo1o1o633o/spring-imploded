@@ -1,0 +1,16 @@
+spring:
+  data:
+    elasticsearch:
+      client:
+        reactive:
+          username: root
+    mongodb:
+      uri: mongodb://msgcenter:auaQ8P0N2@192.168.41.131:27018/msgcenter
+  rabbitmq:
+    host: 192.168.41.125
+    port: 5672
+    username: rabbitmq
+    password: rabbitmq
+    publisher-confirm-type: correlated
+server:
+  port: 12005
