@@ -1,25 +1,14 @@
 package com.s.imploded.configuration;
+import com.s.imploded.service.RabbitReturnsCallbackService;
+import com.s.imploded.service.RabbitConfirmCallbackService;
+import org.springframework.amqp.core.Exchange;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory.CacheMode;
-import java.util.concurrent.Executor;
-import org.springframework.amqp.rabbit.connection.AbstractConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.context.ApplicationContext;
-import java.util.ArrayList;
-import org.springframework.amqp.rabbit.connection.AbstractConnectionFactory.AddressShuffleMode;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.amqp.rabbit.connection.PublisherCallbackChannelFactory;
-import java.net.URI;
-import org.springframework.amqp.rabbit.connection.ConnectionNameStrategy;
-import org.springframework.amqp.support.ConditionalExceptionLogger;
-import java.util.concurrent.ThreadFactory;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory.ConfirmType;
-import com.rabbitmq.client.AddressResolver;
-import com.rabbitmq.client.RecoveryListener;
 
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
-import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -62,18 +51,26 @@ public class RabbitmqConfiguration {
         connectionFactory.setVirtualHost("/");
         // 通过URI方式设置连接, 主机，端口，用户名，密码和虚拟主机.当其中任一参数未设置则ConnectionFactory的对应变量保持不变
         // amqp://username:123456@192.168.1.131:5672
-        connectionFactory.setUri("");
+        // connectionFactory.setUri("");
         // 集群地址, 当不为空时会覆盖host和port参数, "host[:port],..."
         connectionFactory.setAddresses("");
         connectionFactory.setRequestedHeartBeat(0);
         connectionFactory.setConnectionTimeout(0);
         connectionFactory.setCloseTimeout(0);
         connectionFactory.setBeanName("");
-        // 设置回调
+        // 开启returnCallback
         connectionFactory.setPublisherReturns(true);
-        // 生产者消息确认:NONE->禁用,SIMPLE,CORRELATED
-        connectionFactory.setPublisherConfirmType(ConfirmType.CORRELATED);
-        return new RabbitTemplate(connectionFactory);
+        // 生产者消息确认confirmCallback:NONE->禁用,SIMPLE,CORRELATED
+        connectionFactory.setPublisherConfirmType(ConfirmType.SIMPLE);
+
+        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+        // producer->rabbitmq broker cluster->exchange->queue->consumer
+        // message 从 producer 到 rabbitmq broker cluster 则会返回一个 confirmCallback 。
+        // 消息只要被 rabbitmq broker 接收到就会执行 confirmCallback, 如果是 cluster 模式，需要所有 broker 接收到才会调用 confirmCallback。
+        rabbitTemplate.setConfirmCallback(new RabbitConfirmCallbackService());
+        // message 从 exchange->queue 投递失败则会返回一个 returnCallback
+        rabbitTemplate.setReturnsCallback(new RabbitReturnsCallbackService());
+        return rabbitTemplate;
     }
 
     @Bean
@@ -83,11 +80,11 @@ public class RabbitmqConfiguration {
 
     @Bean
     public Queue asyncMessage2() {
-        return new Queue("y.queue.test.2");
+        return new Queue("imploded.queue.2", true, true, true);
     }
 
     @Bean
     public Queue asyncMessage3() {
-        return new Queue("y.queue.test.3");
+        return new Queue("imploded.queue.3", true);
     }
 }
