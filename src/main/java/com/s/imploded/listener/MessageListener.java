@@ -29,7 +29,6 @@ public class MessageListener {
         messageProperties.getAppId();
         log.info("接受到消息: {}", JSONObject.toJSONString(message));
         log.info("接受到消息: {}", JSONObject.toJSONString(channel));
-//        log.info("接受到消息: {}", JSONObject.toJSONString(exchange));, Exchange exchange
     }
 
     /**
@@ -44,11 +43,13 @@ public class MessageListener {
      * 手动ACK
      * Channel 通道
      */
-    @RabbitListener(queues = "y.queue.test.3", concurrency = "2-4")
-    public void acceptMessageAck(Channel channel, Message message) {
+    @RabbitListener(queues = "imploded.queue.3", concurrency = "2-4")
+    public void acceptMessageAck(Channel channel, Message message, String content) {
         try {
-            // 手动ACK
-            channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+            if (Integer.parseInt(content) % 3 == 0) {
+                // 手动ACK
+                channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

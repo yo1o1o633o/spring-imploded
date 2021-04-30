@@ -1,7 +1,7 @@
 package com.s.imploded.configuration;
 import com.s.imploded.service.RabbitReturnsCallbackService;
 import com.s.imploded.service.RabbitConfirmCallbackService;
-import org.springframework.amqp.core.Exchange;
+import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory.CacheMode;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory.ConfirmType;
@@ -9,6 +9,7 @@ import org.springframework.amqp.rabbit.connection.CachingConnectionFactory.Confi
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
+import org.springframework.amqp.rabbit.listener.DirectReplyToMessageListenerContainer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -51,7 +52,7 @@ public class RabbitmqConfiguration {
         connectionFactory.setVirtualHost("/");
         // 通过URI方式设置连接, 主机，端口，用户名，密码和虚拟主机.当其中任一参数未设置则ConnectionFactory的对应变量保持不变
         // amqp://username:123456@192.168.1.131:5672
-        // connectionFactory.setUri("");
+        // * connectionFactory.setUri("");
         // 集群地址, 当不为空时会覆盖host和port参数, "host[:port],..."
         connectionFactory.setAddresses("");
         connectionFactory.setRequestedHeartBeat(0);
@@ -62,6 +63,9 @@ public class RabbitmqConfiguration {
         connectionFactory.setPublisherReturns(true);
         // 生产者消息确认confirmCallback:NONE->禁用,SIMPLE,CORRELATED
         connectionFactory.setPublisherConfirmType(ConfirmType.SIMPLE);
+
+        DirectReplyToMessageListenerContainer directReplyToMessageListenerContainer = new DirectReplyToMessageListenerContainer(connectionFactory);
+        directReplyToMessageListenerContainer.setAcknowledgeMode(AcknowledgeMode.MANUAL);
 
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
         // producer->rabbitmq broker cluster->exchange->queue->consumer

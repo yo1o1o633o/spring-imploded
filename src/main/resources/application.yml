@@ -12,5 +12,8 @@ spring:
     username: rabbitmq
     password: rabbitmq
     publisher-confirm-type: correlated
+    listener:
+      direct:
+        acknowledge-mode: manual
 server:
   port: 12005

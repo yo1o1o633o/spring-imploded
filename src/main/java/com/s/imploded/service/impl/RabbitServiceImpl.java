@@ -21,7 +21,7 @@ public class RabbitServiceImpl implements RabbitService {
         for (int i = 0; i < 100; i++) {
             // 当不传入ID时, 默认生成唯一
             CorrelationData correlationData = new CorrelationData();
-            ackRabbitTemplate.convertAndSend("y.queue.test", (Object) "指定交换机和路由传入消息", correlationData);
+            ackRabbitTemplate.convertAndSend("imploded.queue.3", i, correlationData);
         }
     }
 
