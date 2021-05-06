@@ -12,11 +12,10 @@ public class RabbitConfirmCallbackService implements RabbitTemplate.ConfirmCallb
     @Override
     public void confirm(CorrelationData correlationData, boolean ack, String cause) {
         String id = correlationData.getId();
-        log.info("消息ID: {}", id);
         if (!ack) {
             log.info("消息发送失败: {}", cause);
         } else {
-            log.info("写入成功");
+            log.info("写入成功消息ID: {}", id);
         }
     }
 }

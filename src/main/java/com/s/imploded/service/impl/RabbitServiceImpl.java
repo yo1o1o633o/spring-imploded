@@ -14,19 +14,19 @@ import org.springframework.stereotype.Service;
 @Service
 public class RabbitServiceImpl implements RabbitService {
     @Autowired
-    RabbitTemplate ackRabbitTemplate;
+    RabbitTemplate sRabbitTemplate;
 
     @Override
     public void writeMessage() {
         for (int i = 0; i < 100; i++) {
             // 当不传入ID时, 默认生成唯一
             CorrelationData correlationData = new CorrelationData();
-            ackRabbitTemplate.convertAndSend("imploded.queue.3", i, correlationData);
+            sRabbitTemplate.convertAndSend("s.queue.test", i, correlationData);
         }
     }
 
     public void writeMessageTransacted() {
         // 开启事务
-        ackRabbitTemplate.setChannelTransacted(true);
+        sRabbitTemplate.setChannelTransacted(true);
     }
 }
