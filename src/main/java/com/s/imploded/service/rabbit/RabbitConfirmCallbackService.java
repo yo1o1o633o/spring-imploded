@@ -1,10 +1,11 @@
-package com.s.imploded.service;
+package com.s.imploded.service.rabbit;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 /**
+ * 消息写入确认类，该类实现RabbitTemplate.ConfirmCallback, 实现的confirm接口回调参数中ack会标记写入broker成功状态, 保证消息成功写入broker中
  * @author shuai.yang
  */
 @Slf4j

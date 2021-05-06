@@ -1,11 +1,11 @@
-package com.s.imploded.service.impl;
+package com.s.imploded.service.rabbit;
 
-import com.s.imploded.service.RabbitService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author shuai.yang
@@ -19,14 +19,30 @@ public class RabbitServiceImpl implements RabbitService {
     @Override
     public void writeMessage() {
         for (int i = 0; i < 100; i++) {
-            // 当不传入ID时, 默认生成唯一
+            // 当不传入ID时, 默认生成唯一, 用于消费时校验消息幂等性,如用redis判断消息重复消费
             CorrelationData correlationData = new CorrelationData();
             sRabbitTemplate.convertAndSend("s.queue.test", i, correlationData);
         }
     }
 
+    /**
+     * 写主题消息
+     * */
+    public void writeMessageTopic() {
+
+    }
+
+    /**
+     * 写主题消息
+     * */
+    public void writeMessage1() {
+
+    }
+
+    @Transactional(rollbackFor = Exception.class)
     public void writeMessageTransacted() {
         // 开启事务
         sRabbitTemplate.setChannelTransacted(true);
+        sRabbitTemplate.convertAndSend("s.queue.test");
     }
 }

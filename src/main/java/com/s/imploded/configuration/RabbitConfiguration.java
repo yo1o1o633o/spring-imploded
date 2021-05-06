@@ -1,7 +1,7 @@
 package com.s.imploded.configuration;
 
-import com.s.imploded.service.RabbitReturnsCallbackService;
-import com.s.imploded.service.RabbitConfirmCallbackService;
+import com.s.imploded.service.rabbit.RabbitReturnsCallbackService;
+import com.s.imploded.service.rabbit.RabbitConfirmCallbackService;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory.CacheMode;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -13,8 +13,6 @@ import org.springframework.amqp.rabbit.listener.api.ChannelAwareMessageListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.UUID;
 
 /**
@@ -25,7 +23,7 @@ import java.util.UUID;
  * */
 @EnableRabbit
 @Configuration
-public class RabbitmqConfiguration {
+public class RabbitConfiguration {
 
     /**
      * 自定义ackRabbitTemplate, 设置消息确认和回调
@@ -82,40 +80,11 @@ public class RabbitmqConfiguration {
         return rabbitTemplate;
     }
 
-    /**
-     * 创建交换机
-     * 名字: topic.1
-     * 持久化: true
-     * 自动删除: false
-     * */
     @Bean
-    public TopicExchange sTopicExchange() {
-        return new TopicExchange("topic.1", true, false);
-    }
-
-    /**
-     * 创建队列
-     * 名字: s.queue.test
-     * 持久化: true
-     * */
-    @Bean
-    public Queue sQueue() {
-        return new Queue("s.queue.test", true);
-    }
-
-    /**
-     * 绑定交换机
-     * */
-    @Bean
-    public Binding sBinding() {
-        return BindingBuilder.bind(sQueue()).to(sTopicExchange()).with("spring.*");
-    }
-
-    @Bean
-    public SimpleMessageListenerContainer mqMessageContainer(CachingConnectionFactory sCachingConnectionFactory) {
+    public SimpleMessageListenerContainer sMessageContainer(CachingConnectionFactory sCachingConnectionFactory) {
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(sCachingConnectionFactory);
         // 监听队列, 支持多个
-        container.setQueues(sQueue());
+        container.setQueues();
         // 消费者数量
         container.setConcurrentConsumers(1);
         container.setMaxConcurrentConsumers(5);
@@ -123,31 +92,18 @@ public class RabbitmqConfiguration {
         container.setDefaultRequeueRejected(false);
         // 是否自动ACK
         container.setAcknowledgeMode(AcknowledgeMode.MANUAL);
+        // 预加载消息数, 默认250
+        container.setPrefetchCount(250);
         // 设置监听外露
         container.setExposeListenerChannel(true);
         // 设置消费端标签策略
         container.setConsumerTagStrategy(queue -> queue + "_" + UUID.randomUUID().toString());
         // 设置消息监听
         container.setMessageListener((ChannelAwareMessageListener) (message, channel) -> {
-            // 手动ACK
+            // 手动ACK, 第二个参数表示是否开启批量确认
             channel.basicAck(message.getMessageProperties().getDeliveryTag(), true);
             System.out.println(message);
         });
         return container;
-    }
-
-    @Bean
-    public Queue asyncMessage() {
-        return new Queue("y.queue.test");
-    }
-
-    @Bean
-    public Queue asyncMessage2() {
-        return new Queue("imploded.queue.2", true, true, true);
-    }
-
-    @Bean
-    public Queue asyncMessage3() {
-        return new Queue("imploded.queue.3", true);
     }
 }

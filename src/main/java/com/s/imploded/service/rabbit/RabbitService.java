@@ -1,4 +1,4 @@
-package com.s.imploded.service;
+package com.s.imploded.service.rabbit;
 
 /**
  * @author shuai.yang
