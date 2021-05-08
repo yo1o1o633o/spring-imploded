@@ -5,4 +5,8 @@ package com.s.imploded.service.rabbit;
  */
 public interface RabbitService {
     void writeMessage();
+
+    void writeMessageDirect();
+
+    void writeMessageFanout();
 }
