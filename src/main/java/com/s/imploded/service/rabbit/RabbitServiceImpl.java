@@ -18,11 +18,12 @@ public class RabbitServiceImpl implements RabbitService {
 
     @Override
     public void writeMessage() {
-        for (int i = 0; i < 100; i++) {
-            // 当不传入ID时, 默认生成唯一, 用于消费时校验消息幂等性,如用redis判断消息重复消费
-            CorrelationData correlationData = new CorrelationData();
-            sRabbitTemplate.convertAndSend("s.queue.test", i, correlationData);
-        }
+        writeMessageDirect();
+//        for (int i = 0; i < 100; i++) {
+//            // 当不传入ID时, 默认生成唯一, 用于消费时校验消息幂等性,如用redis判断消息重复消费
+//            CorrelationData correlationData = new CorrelationData();
+//            sRabbitTemplate.convertAndSend("s.queue.test", i, correlationData);
+//        }
     }
 
     /**
@@ -36,7 +37,7 @@ public class RabbitServiceImpl implements RabbitService {
      * 写主题消息
      * */
     public void writeMessageDirect() {
-
+        sRabbitTemplate.convertAndSend("s.exchange.direct.1", "s.direct.route.1", "此消息发往直连交换机", new CorrelationData());
     }
 
     public void writeMessageHeaders() {
