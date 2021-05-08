@@ -15,6 +15,9 @@ public class TestRabbitController {
 
     @RequestMapping("/rabbit/write/message")
     public void writeMessage() {
-        rabbitService.writeMessage();
+        rabbitService.writeMessageDirect();
+        rabbitService.writeMessageFanout();
+        rabbitService.writeMessageHeaders();
+        rabbitService.writeMessageTopic();
     }
 }

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
  */
 @Slf4j
 @Service
-public class HeadersMessageListener {
+public class MessageHeadersListener {
 
     /**
      * concurrency= "2-4" 监听线程数

@@ -18,31 +18,26 @@ public class RabbitServiceImpl implements RabbitService {
     @Autowired
     RabbitTemplate sRabbitTemplate;
 
-    @Override
-    public void writeMessage() {
-        writeMessageHeaders();
-//        for (int i = 0; i < 100; i++) {
-//            // 当不传入ID时, 默认生成唯一, 用于消费时校验消息幂等性,如用redis判断消息重复消费
-//            CorrelationData correlationData = new CorrelationData();
-//            sRabbitTemplate.convertAndSend("s.queue.test", i, correlationData);
-//        }
-    }
-
     /**
      * 写主题消息
      * */
+    @Override
     public void writeMessageTopic() {
-
+        sRabbitTemplate.convertAndSend("s.exchange.topic", "topic.1", "此消息发往主题交换机1", new CorrelationData());
+        sRabbitTemplate.convertAndSend("s.exchange.topic", "topic.2", "此消息发往主题交换机2", new CorrelationData());
     }
 
     /**
-     * 写主题消息
+     * 写直连消息
      * */
     @Override
     public void writeMessageDirect() {
         sRabbitTemplate.convertAndSend("s.exchange.direct.1", "s.direct.route.1", "此消息发往直连交换机", new CorrelationData());
     }
 
+    /**
+     * 写头部消息
+     * */
     @Override
     public void writeMessageHeaders() {
         MessageProperties messageProperties = new MessageProperties();
@@ -53,6 +48,9 @@ public class RabbitServiceImpl implements RabbitService {
         sRabbitTemplate.convertAndSend("s.exchange.headers", "", message, new CorrelationData());
     }
 
+    /**
+     * 写扇形消息
+     * */
     @Override
     public void writeMessageFanout() {
         sRabbitTemplate.convertAndSend("s.exchange.fanout", "", "此消息发往扇形交换机", new CorrelationData());

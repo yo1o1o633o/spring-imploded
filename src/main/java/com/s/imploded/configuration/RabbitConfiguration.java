@@ -77,6 +77,10 @@ public class RabbitConfiguration {
         rabbitTemplate.setConfirmCallback(new RabbitConfirmCallbackService());
         // message 从 exchange->queue 投递失败则会返回一个 returnCallback
         rabbitTemplate.setReturnsCallback(new RabbitReturnsCallbackService());
+        // 当mandatory标志位设置为true时，如果exchange根据自身类型和消息routeKey无法找到一个符合条件的queue，
+        // 那么会调用basic.return方法将消息返回给生产者（Basic.Return + Content-Header + Content-Body）；
+        // 当mandatory设置为false时，出现上述情形broker会直接将消息扔掉。
+        rabbitTemplate.setMandatory(true);
         return rabbitTemplate;
     }
 

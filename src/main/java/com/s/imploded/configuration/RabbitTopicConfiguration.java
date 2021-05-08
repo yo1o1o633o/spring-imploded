@@ -23,7 +23,7 @@ public class RabbitTopicConfiguration {
      */
     @Bean
     public TopicExchange topicExchange() {
-        return new TopicExchange("topic.1", true, false);
+        return new TopicExchange("s.exchange.topic", true, false);
     }
 
     /**
@@ -32,15 +32,23 @@ public class RabbitTopicConfiguration {
      * 持久化: true
      */
     @Bean
-    public Queue topicQueue() {
-        return new Queue("s.queue.test", true);
+    public Queue topicQueue1() {
+        return new Queue("s.queue.topic.1", true);
+    }
+    @Bean
+    public Queue topicQueue2() {
+        return new Queue("s.queue.topic.2", true);
     }
 
     /**
      * 绑定交换机
      */
     @Bean
-    public Binding topicBinding() {
-        return BindingBuilder.bind(topicQueue()).to(topicExchange()).with("topic.*");
+    public Binding topicBinding1() {
+        return BindingBuilder.bind(topicQueue1()).to(topicExchange()).with("topic.1");
+    }
+    @Bean
+    public Binding topicBinding2() {
+        return BindingBuilder.bind(topicQueue2()).to(topicExchange()).with("topic.#");
     }
 }
