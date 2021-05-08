@@ -9,4 +9,6 @@ public interface RabbitService {
     void writeMessageDirect();
 
     void writeMessageFanout();
+
+    void writeMessageHeaders();
 }

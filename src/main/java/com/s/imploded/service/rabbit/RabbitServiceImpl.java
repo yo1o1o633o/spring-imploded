@@ -1,6 +1,8 @@
 package com.s.imploded.service.rabbit;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +20,7 @@ public class RabbitServiceImpl implements RabbitService {
 
     @Override
     public void writeMessage() {
-        writeMessageFanout();
+        writeMessageHeaders();
 //        for (int i = 0; i < 100; i++) {
 //            // 当不传入ID时, 默认生成唯一, 用于消费时校验消息幂等性,如用redis判断消息重复消费
 //            CorrelationData correlationData = new CorrelationData();
@@ -41,8 +43,14 @@ public class RabbitServiceImpl implements RabbitService {
         sRabbitTemplate.convertAndSend("s.exchange.direct.1", "s.direct.route.1", "此消息发往直连交换机", new CorrelationData());
     }
 
+    @Override
     public void writeMessageHeaders() {
+        MessageProperties messageProperties = new MessageProperties();
+        messageProperties.setHeader("header1", 1);
+        messageProperties.setHeader("header2", 3);
 
+        Message message = new Message("此消息发往头部交换机".getBytes(), messageProperties);
+        sRabbitTemplate.convertAndSend("s.exchange.headers", "", message, new CorrelationData());
     }
 
     @Override
