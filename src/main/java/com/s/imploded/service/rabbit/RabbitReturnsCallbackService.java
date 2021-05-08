@@ -7,6 +7,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 /**
  * 只有当交换机向队列（exchange->queue）写入失败时, 此类的回调方法会触发. 否则不执行
+ *
  * @author shuai.yang
  */
 @Slf4j

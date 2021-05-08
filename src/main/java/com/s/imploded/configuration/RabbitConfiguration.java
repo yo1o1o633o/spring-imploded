@@ -17,10 +17,10 @@ import java.util.UUID;
 
 /**
  * 开启基于注解的RabbitMQ模式
- *  * @EnableRabbit
+ * * @EnableRabbit
  *
  * @author shuai.yang
- * */
+ */
 @EnableRabbit
 @Configuration
 public class RabbitConfiguration {

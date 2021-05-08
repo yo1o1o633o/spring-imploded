@@ -27,14 +27,14 @@ public class RabbitServiceImpl implements RabbitService {
 
     /**
      * 写主题消息
-     * */
+     */
     public void writeMessageTopic() {
 
     }
 
     /**
      * 写主题消息
-     * */
+     */
     public void writeMessage1() {
 
     }

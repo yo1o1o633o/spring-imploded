@@ -9,6 +9,8 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * 主题交换机定义,队列定义和绑定
+ *
+ * @author shuai.yang
  */
 @Configuration
 public class RabbitTopicConfiguration {
@@ -18,7 +20,7 @@ public class RabbitTopicConfiguration {
      * 名字: topic.1
      * 持久化: true
      * 自动删除: false
-     * */
+     */
     @Bean
     public TopicExchange topicExchange() {
         return new TopicExchange("topic.1", true, false);
@@ -28,7 +30,7 @@ public class RabbitTopicConfiguration {
      * 创建队列
      * 名字: s.queue.test
      * 持久化: true
-     * */
+     */
     @Bean
     public Queue topicQueue() {
         return new Queue("s.queue.test", true);
@@ -36,7 +38,7 @@ public class RabbitTopicConfiguration {
 
     /**
      * 绑定交换机
-     * */
+     */
     @Bean
     public Binding topicBinding() {
         return BindingBuilder.bind(topicQueue()).to(topicExchange()).with("topic.*");
