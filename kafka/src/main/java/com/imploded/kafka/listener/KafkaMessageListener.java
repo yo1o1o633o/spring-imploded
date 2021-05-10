@@ -1,6 +1,5 @@
-package com.s.imploded.listener;
+package com.imploded.kafka.listener;
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;

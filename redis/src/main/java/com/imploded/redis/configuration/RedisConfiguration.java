@@ -1,4 +1,4 @@
-package com.s.imploded.configuration;
+package com.imploded.redis.configuration;
 
 import org.springframework.context.annotation.Configuration;
 
