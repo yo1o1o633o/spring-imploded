@@ -3,6 +3,9 @@ package com.imploded.kafka;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+/**
+ * @author shuai.yang
+ */
 @SpringBootApplication
 public class KafkaApplication {
 

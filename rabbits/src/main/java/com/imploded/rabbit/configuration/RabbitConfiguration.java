@@ -1,7 +1,7 @@
 package com.imploded.rabbit.configuration;
 
-import com.s.imploded.service.rabbit.RabbitReturnsCallbackService;
-import com.s.imploded.service.rabbit.RabbitConfirmCallbackService;
+import com.imploded.rabbit.service.RabbitConfirmCallbackService;
+import com.imploded.rabbit.service.RabbitReturnsCallbackService;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory.CacheMode;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
