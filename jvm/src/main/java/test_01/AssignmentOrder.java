@@ -1,5 +1,8 @@
 package test_01;
 
+/**
+ * @author shuai.yang
+ */
 public class AssignmentOrder {
     private static int a = 1;
 
