@@ -4,6 +4,8 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -16,6 +18,8 @@ public class ApplicationContext {
     private ConcurrentHashMap<String, Object> singleMap = new ConcurrentHashMap<>();
 
     private ConcurrentHashMap<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<>();
+
+    private List<BeanPostProcessor> beanPostProcessorList = new ArrayList<>();
 
     public ApplicationContext(Class configClass) {
         this.configClass = configClass;
@@ -54,10 +58,20 @@ public class ApplicationContext {
                 BeanNameAware beanNameAware = (BeanNameAware) o;
                 beanNameAware.setBeanName(definition.getBeanName());
             }
+            // 初始化前
+            for (BeanPostProcessor processor : beanPostProcessorList) {
+                processor.postProcessBeforeInitialization(o, definition.getBeanName());
+            }
+
             // 初始化
             if (o instanceof InitializingBean) {
                 InitializingBean beanNameAware = (InitializingBean) o;
                 beanNameAware.afterPropertiesSet();
+            }
+
+            // 初始化后
+            for (BeanPostProcessor processor : beanPostProcessorList) {
+                processor.postProcessAfterInitialization(o, definition.getBeanName());
             }
             return o;
         } catch (Exception e) {
@@ -98,6 +112,11 @@ public class ApplicationContext {
                         aClass = classLoader.loadClass(className);
                         // 判断加载的类是否有Component注解
                         if (aClass.isAnnotationPresent(Component.class)) {
+                            // 判断aClass是否实现了BeanPostProcessor接口
+                            if (BeanPostProcessor.class.isAssignableFrom(aClass)) {
+                                BeanPostProcessor processor = (BeanPostProcessor) aClass.getDeclaredConstructor().newInstance();
+                                beanPostProcessorList.add(processor);
+                            }
                             // 表示当前类是一个Bean
                             Component componentAnnotation = aClass.getDeclaredAnnotation(Component.class);
                             String beanName = componentAnnotation.value();
@@ -117,7 +136,7 @@ public class ApplicationContext {
                             // 将Bean定义放入Map中
                             beanDefinitionMap.put(beanName, beanDefinition);
                         }
-                    } catch (ClassNotFoundException e) {
+                    } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
                         e.printStackTrace();
                     }
                 }
