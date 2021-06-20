@@ -95,6 +95,7 @@ public class ApplicationContext {
             File file = new File(resource.getFile());
             // 如果是一个目录
             if (file.isDirectory()) {
+                // TODO 扫描不到子目录的文件
                 File[] files = file.listFiles();
                 for (File f : files) {
                     // 获取路径地址 E:\Github\spring-imploded\spring\target\classes\service\UserService.class
@@ -103,7 +104,7 @@ public class ApplicationContext {
                     if (!absolutePath.endsWith(".class")) {
                         continue;
                     }
-                    // 截取全限定名 service.UserService.class
+                    // 截取全限定名 service.impl.UserService.class
                     String className = absolutePath.substring(absolutePath.indexOf(value), absolutePath.indexOf(".class"));
                     className = className.replaceAll("\\\\", ".");
 
