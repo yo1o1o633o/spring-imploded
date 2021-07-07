@@ -24,6 +24,9 @@ public class MyCustomClassLoader extends ClassLoader {
         return defineClass(name, bytes, 0, bytes.length);
     }
 
+    /**
+     * 自定义类加载器, 使用此加载器来加载指定类文件, 如果加载得是指定包开头的类, 就使用自定义的类加载逻辑进行加载, 否则调用父类的类加载逻辑
+     */
     @Override
     protected Class<?> loadClass(String name, boolean resolve) {
         synchronized (getClassLoadingLock(name)) {
