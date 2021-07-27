@@ -1,6 +1,5 @@
 package com.imploded.push.utils;
 
-import com.to8to.common.util.DateUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.text.DateFormat;
@@ -36,35 +35,6 @@ public class TimeUtils {
         return timestamp.longValue();
     }
 
-    /**
-     * 格式化日期
-     *
-     * @param timestamp
-     * @return
-     */
-    public static String timestampToDate(int timestamp) {
-        if (timestamp > 0) {
-            int startTime = new Long(DateUtils.getDayStartTime()).intValue();
-            if (timestamp > startTime) {
-                return DateUtils.format(new Date((timestamp * 1000L)), "HH:mm");
-            } else {
-                return DateUtils.format(new Date((timestamp * 1000L)), "MM-dd");
-            }
-        }
-        return "";
-    }
-
-    public static String timestampToYear(int timestamp) {
-        if (timestamp > 0){
-            int startTime = getYearStartTime().intValue();
-            if (timestamp > startTime) {
-                return timestampToDate(timestamp);
-            }else {
-                return DateUtils.format(new Date(timestamp * 1000L),"yyyy-MM-dd");
-            }
-        }
-        return "";
-    }
 
     public static Long getYearStartTime(){
 

@@ -8,7 +8,10 @@ import com.imploded.push.entity.DeviceToken;
 import com.imploded.push.provider.AbstractAppPushProvider;
 import com.imploded.push.provider.AppPushProvider;
 import com.imploded.push.utils.TimeUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,10 +20,30 @@ import java.util.Map;
 /**
  * @author shuai.yang
  */
+@Slf4j
 public class ApnsAppPushProvider extends AbstractAppPushProvider implements AppPushProvider {
+    @Value("${app.push.apns.credentials.env:release}")
+    private String credentialsEnv;
+    @Value("${app.push.apns.group.size.max:1000}")
+    private Integer maxGroupSize;
+    @Value("${app.push.apns.await.levels:5,10,20,40,60}")
+    private int[] awaitLevels;
+    @Value("${app.push.apns.nio.event.loop.count:8}")
+    private int nioEventLoopGroupCount;
+    @Value("${app.push.apns.nio.socket.channel.count:8}")
+    private int connectChannelCount;
+    @Value("#{'${app.push.apns.user.invalid.desc:Unregistered,BadDeviceToken,InvalidProviderToken}'.split(',')}")
+    List<String> invalidUserDescList;
+    @Value("${app.push.apns.watch.detail:true}")
+    public boolean watchDetail;
 
-    public void init() {
-
+    public void init() throws Exception {
+        try {
+            ApnsPush.initApns(credentialsEnv, maxGroupSize, nioEventLoopGroupCount, connectChannelCount);
+        } catch (IOException e) {
+            log.error("apns:appPush初始化证书环境失败！", e);
+            throw new Exception("", e);
+        }
     }
 
     @Override

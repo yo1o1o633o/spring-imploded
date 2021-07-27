@@ -43,12 +43,6 @@ public class RedirectAppMsgDTO extends CommonDTO {
     @JsonProperty(value = "message")
     private PushMessageDTO message;
 
-    @JsonProperty(value = "to8to")
-    private Map<String,Object> to8to;
-
-    @JsonProperty(value = "to8to_custom")
-    private Map<String,Object> to8toCustom;
-
     @JsonProperty(value = "start_time")
     private String startTime;
 
