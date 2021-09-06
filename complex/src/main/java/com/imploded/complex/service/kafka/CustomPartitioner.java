@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * @author shuai.yang
+ */
 public class CustomPartitioner implements Partitioner {
     private final AtomicInteger count = new AtomicInteger(0);
 

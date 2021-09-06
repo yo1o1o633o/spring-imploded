@@ -1,12 +1,8 @@
 package com.imploded.thread.configuration;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.*;
 
 import org.springframework.core.task.TaskDecorator;
-
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
 
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
@@ -53,7 +49,6 @@ public class ThreadPoolConfig {
         taskExecutor.setDaemon(false);
         taskExecutor.setThreadGroupName("");
 //        taskExecutor.setThreadGroup(new ThreadGroup());
-
         return taskExecutor;
     }
 }
