@@ -1,14 +1,13 @@
 package com.imploded.complex.service.kafka.impl;
 
 import com.imploded.complex.service.kafka.ConsumerService;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.temporal.TemporalUnit;
@@ -17,6 +16,8 @@ import java.util.*;
 /**
  * @author shuai.yang
  */
+@Slf4j
+@Service
 public class ConsumerServiceImpl implements ConsumerService {
     @Override
     public void receiveMessage() {
@@ -56,11 +57,21 @@ public class ConsumerServiceImpl implements ConsumerService {
         records.records(new TopicPartition("topic-2", 1));
         // 获取消息集中的所有分区
         Set<TopicPartition> partitions = records.partitions();
-        Iterator<ConsumerRecord<Object, Object>> iterator = records.iterator();
-        while (iterator.hasNext()) {
+        long lastConsumerOffset = -1;
+        for (ConsumerRecord<Object, Object> consumerRecord : records) {
             // 转成迭代器迭代每条消息
-            ConsumerRecord<Object, Object> consumerRecord = iterator.next();
+            lastConsumerOffset = consumerRecord.offset();
+            // 同步提交位移
+            consumer.commitSync();
         }
+        // 消费者消费到此分区消息的最大偏移量377
+        log.info("消费者消费到此分区消息的最大偏移量: {}", lastConsumerOffset);
+        // 提交的位移378
+        OffsetAndMetadata metadata = consumer.committed(new TopicPartition("topic-2", 1));
+        log.info("提交的位移: {}", metadata.offset());
+        // 下一次所要拉取的消息的起始偏移量378
+        long position = consumer.position(new TopicPartition("topic-2", 1));
+        log.info("下一次所要拉取的消息的起始偏移量: {}", position);
         // 取消订阅, 如果订阅时指定的主题为空数组, 则也相当于取消订阅操作
         consumer.unsubscribe();
     }
