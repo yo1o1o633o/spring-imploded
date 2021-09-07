@@ -18,6 +18,13 @@ import java.util.*;
  * @author shuai.yang
  */
 public class ConsumerServiceImpl implements ConsumerService {
+
+    private Properties properties;
+
+    public ConsumerServiceImpl() {
+        this.properties = initConfig();
+    }
+
     @Override
     public void receiveMessage() {
         // 初始化配置
@@ -75,5 +82,23 @@ public class ConsumerServiceImpl implements ConsumerService {
         properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         return properties;
+    }
+
+    private void getConsumer() {
+        // 创建一个消费者
+        KafkaConsumer<Object, Object> consumer = new KafkaConsumer<>(this.properties);
+        // 订阅主题
+        consumer.subscribe(Collections.singleton("topic-1"));
+        // 拉取一批消息
+        ConsumerRecords<Object, Object> records = consumer.poll(Duration.ofSeconds(Long.MAX_VALUE));
+        // 获取拉取到的消息集中的所有分区
+        Set<TopicPartition> partitions = records.partitions();
+        // 遍历分区
+        for (TopicPartition partition : partitions) {
+            // 根据分区号在消息集中获取消息列表
+            List<ConsumerRecord<Object, Object>> recordList = records.records(partition);
+            // 同步提交
+            consumer.commitSync();
+        }
     }
 }
