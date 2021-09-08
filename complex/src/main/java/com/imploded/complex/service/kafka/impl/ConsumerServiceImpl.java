@@ -1,16 +1,15 @@
 package com.imploded.complex.service.kafka.impl;
 
+import com.imploded.complex.service.kafka.ConsumerRunning;
 import com.imploded.complex.service.kafka.ConsumerService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.*;
-import org.apache.kafka.common.Node;
-import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.time.temporal.TemporalUnit;
 import java.util.*;
 
 /**
@@ -20,67 +19,41 @@ import java.util.*;
 @Service
 public class ConsumerServiceImpl implements ConsumerService {
 
-    private Properties properties;
-
-    public ConsumerServiceImpl() {
-        this.properties = initConfig();
-    }
-
     @Override
     public void receiveMessage() {
         // 初始化配置
         Properties properties = initConfig();
-        // 创建消费者, 非线程安全的
+        // 创建一个消费者
         KafkaConsumer<Object, Object> consumer = new KafkaConsumer<>(properties);
-        // 订阅主题, 多个重载接口, 支持正则, 集合形式传入多个主题
-        consumer.subscribe(Arrays.asList("topic_1", "topic_2"));
-        // 多次订阅以最后一次的订阅为准
-        consumer.subscribe(Arrays.asList("topic_3", "topic_4"));
-        // 通过正则订阅主题, 使用此方式在后续有新建的主题符合这个正则时会自动被订阅消费
-        consumer.subscribe(Collections.singletonList("topic-.*"));
-        // 订阅指定主题的指定分区
-        consumer.assign(Collections.singleton(new TopicPartition("topic-5", 1)));
-        // 获取主题的分区信息列表
-        List<PartitionInfo> partitionInfos = consumer.partitionsFor("topic-6");
-        for (PartitionInfo partitionInfo : partitionInfos) {
-            // 主题名
-            String topic = partitionInfo.topic();
-            // 分区号
-            int partition = partitionInfo.partition();
-            // 当前的leader结点
-            Node leader = partitionInfo.leader();
-            // 分区的AR集合
-            Node[] replicas = partitionInfo.replicas();
-            // 分区的ISR集合
-            Node[] inSyncReplicas = partitionInfo.inSyncReplicas();
-            // 分区的OSR集合
-            Node[] offlineReplicas = partitionInfo.offlineReplicas();
-        }
-        // 拉取一批消息, 超时时间1秒. 如果当前应用线程专用消费, 则可以设置成最大值.
-        ConsumerRecords<Object, Object> records = consumer.poll(Duration.ofSeconds(1));
-        // 获取消息集中指定主题的消息
-        records.records("topic-1");
-        // 获取消息集中指定主题中指定分区消息
-        records.records(new TopicPartition("topic-2", 1));
-        // 获取消息集中的所有分区
+        // 订阅主题
+        consumer.subscribe(Collections.singleton("topic-1"));
+        // 拉取一批消息
+        ConsumerRecords<Object, Object> records = consumer.poll(Duration.ofSeconds(Long.MAX_VALUE));
+        // 获取拉取到的消息集中的所有分区
         Set<TopicPartition> partitions = records.partitions();
-        long lastConsumerOffset = -1;
-        for (ConsumerRecord<Object, Object> consumerRecord : records) {
-            // 转成迭代器迭代每条消息
-            lastConsumerOffset = consumerRecord.offset();
-            // 同步提交位移
-            consumer.commitSync();
+        // 遍历分区
+        for (TopicPartition partition : partitions) {
+            // 根据分区号在消息集中获取消息列表
+            List<ConsumerRecord<Object, Object>> recordList = records.records(partition);
+            for (ConsumerRecord<Object, Object> record : recordList) {
+                log.info("消费消息: {}", record.value());
+            }
+            // 最后一条消息的位移
+            long offset = recordList.get(recordList.size() - 1).offset();
+            // 同步提交, 按分区粒度同步提交消费位移
+            consumer.commitSync(Collections.singletonMap(partition, new OffsetAndMetadata(offset + 1)));
+            // 异步提交
+            consumer.commitAsync(new OffsetCommitCallback() {
+                @Override
+                public void onComplete(Map<TopicPartition, OffsetAndMetadata> offsets, Exception exception) {
+                    if (exception == null) {
+                        log.info("提交位移成功: {}", offsets);
+                    } else {
+                        log.error("提交位移失败: {}", offsets, exception);
+                    }
+                }
+            });
         }
-        // 消费者消费到此分区消息的最大偏移量377
-        log.info("消费者消费到此分区消息的最大偏移量: {}", lastConsumerOffset);
-        // 提交的位移378
-        OffsetAndMetadata metadata = consumer.committed(new TopicPartition("topic-2", 1));
-        log.info("提交的位移: {}", metadata.offset());
-        // 下一次所要拉取的消息的起始偏移量378
-        long position = consumer.position(new TopicPartition("topic-2", 1));
-        log.info("下一次所要拉取的消息的起始偏移量: {}", position);
-        // 取消订阅, 如果订阅时指定的主题为空数组, 则也相当于取消订阅操作
-        consumer.unsubscribe();
     }
 
     private Properties initConfig() {
@@ -95,21 +68,64 @@ public class ConsumerServiceImpl implements ConsumerService {
         return properties;
     }
 
-    private void getConsumer() {
-        // 创建一个消费者
-        KafkaConsumer<Object, Object> consumer = new KafkaConsumer<>(this.properties);
-        // 订阅主题
-        consumer.subscribe(Collections.singleton("topic-1"));
-        // 拉取一批消息
-        ConsumerRecords<Object, Object> records = consumer.poll(Duration.ofSeconds(Long.MAX_VALUE));
-        // 获取拉取到的消息集中的所有分区
-        Set<TopicPartition> partitions = records.partitions();
-        // 遍历分区
-        for (TopicPartition partition : partitions) {
-            // 根据分区号在消息集中获取消息列表
-            List<ConsumerRecord<Object, Object>> recordList = records.records(partition);
-            // 同步提交
-            consumer.commitSync();
+    /**
+     * 取消订阅
+     * */
+    private void unsubscribe(KafkaConsumer<Object, Object> consumer) {
+        // 取消订阅方法
+        consumer.unsubscribe();
+        // 订阅空主题, 也相当于取消订阅操作
+        consumer.subscribe(new ArrayList<>());
+    }
+
+    /**
+     * 可关闭的消费逻辑
+     * */
+    private void consumeMessage(KafkaConsumer<Object, Object> consumer) {
+        try {
+            while (ConsumerRunning.getRunning()) {
+                ConsumerRecords<Object, Object> records = consumer.poll(Duration.ofSeconds(Long.MAX_VALUE));
+                // 获取拉取到的消息集中的所有分区
+                Set<TopicPartition> partitions = records.partitions();
+                // 遍历分区
+                for (TopicPartition partition : partitions) {
+                    // 处理消息
+                    Long offset = processMessage(records, partition);
+                    // 提交位移
+                    consumer.commitSync(Collections.singletonMap(partition, new OffsetAndMetadata(offset + 1)));
+                }
+            }
+        } catch (WakeupException e) {
+            log.info("监听WakeupException异常, 其他线程调用wakeup方法...");
+        } catch (Exception e) {
+            log.error("其他异常");
+        } finally {
+            // 关闭消费者资源, 可能会触发提交位移操作
+            consumer.close();
         }
+    }
+
+    /**
+     * 对状态设置成false, 可以关闭上个消费方法
+     * */
+    private void closeConsumer() {
+        ConsumerRunning.setRunning(false);
+    }
+
+    /**
+     * 调用wakeup()方法, 可以关闭上个消费方法
+     * */
+    private void closeConsumerWithWakeUp(KafkaConsumer<Object, Object> consumer) {
+        consumer.wakeup();
+    }
+
+    private Long processMessage(ConsumerRecords<Object, Object> records, TopicPartition partition) {
+        // 根据分区号在消息集中获取消息列表
+        List<ConsumerRecord<Object, Object>> recordList = records.records(partition);
+        for (ConsumerRecord<Object, Object> record : recordList) {
+            log.info("消费消息: {}", record.value());
+        }
+        // 最后一条消息的位移
+        return recordList.get(recordList.size() - 1).offset();
     }
 }
