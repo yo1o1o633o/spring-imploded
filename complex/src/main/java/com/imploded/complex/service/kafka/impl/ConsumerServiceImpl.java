@@ -128,4 +128,41 @@ public class ConsumerServiceImpl implements ConsumerService {
         // 最后一条消息的位移
         return recordList.get(recordList.size() - 1).offset();
     }
+
+    /**
+     * 重置消费位移, 使消费者从指定的位移重新消费
+     * */
+    private void seekConsumer() {
+        Properties properties = initConfig();
+        // 创建消费者
+        KafkaConsumer<Object, Object> consumer = new KafkaConsumer<>(properties);
+        // 订阅主题
+        consumer.subscribe(Collections.singleton("topic-1"));
+        Set<TopicPartition> assignments = new HashSet<>();
+        // 自旋, 重复尝试获取分区信息
+        while (assignments.size() == 0) {
+            // 调用poll使消费者分配分区信息, 100毫秒超时, 当poll()方法中的参数为0时,此方法立刻返回,那么poll())方法内部进行分区分配的逻辑就会来不及实施
+            consumer.poll(Duration.ofMillis(100));
+            // 消费者分配到的分区信息
+            assignments = consumer.assignment();
+        }
+        Map<TopicPartition, Long> partitionLongMap = new HashMap<>();
+        for (TopicPartition assignment : assignments) {
+            partitionLongMap.put(assignment, System.currentTimeMillis() - 86400000);
+        }
+        Map<TopicPartition, OffsetAndTimestamp> offsetAndTimestampMap = consumer.offsetsForTimes(partitionLongMap);
+        for (TopicPartition assignment : assignments) {
+            OffsetAndTimestamp offsetAndTimestamp = offsetAndTimestampMap.get(assignment);
+            if (offsetAndTimestamp != null) {
+                consumer.seek(assignment, offsetAndTimestamp.offset());
+            }
+            // seek方法重置该分区的消费位移
+            consumer.seek(assignment, 10);
+        }
+        // 重置该分区消费位移到分区头部, 头部不一定是0, 因为日志清理的动作会清理旧的数据, 所以分区的起始位置会自然而然地增加
+        consumer.seekToBeginning(assignments);
+        // 重置该分区消费位移到分区尾部
+        consumer.seekToEnd(assignments);
+        // 消费逻辑......
+    }
 }
