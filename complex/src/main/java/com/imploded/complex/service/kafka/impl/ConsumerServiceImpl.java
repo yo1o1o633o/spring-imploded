@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * @author shuai.yang
@@ -65,6 +66,7 @@ public class ConsumerServiceImpl implements ConsumerService {
         properties.put(ConsumerConfig.GROUP_ID_CONFIG, "group_1");
         properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
         return properties;
     }
 
@@ -164,5 +166,120 @@ public class ConsumerServiceImpl implements ConsumerService {
         // 重置该分区消费位移到分区尾部
         consumer.seekToEnd(assignments);
         // 消费逻辑......
+    }
+
+    private void rebalanceConsumer() {
+        // 保存消费位移
+        Map<TopicPartition, OffsetAndMetadata> currentOffsets = new HashMap<>();
+        Properties properties = initConfig();
+        // 创建消费者
+        KafkaConsumer<Object, Object> consumer = new KafkaConsumer<>(properties);
+        // 订阅主题并添加再均衡监听器
+        consumer.subscribe(Collections.singleton("topic-1"), new ConsumerRebalanceListener() {
+            // 当发生再均衡操作
+            @Override
+            public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
+                // 发生再均衡, 提交消费位移, 避免重复消费
+                consumer.commitSync(currentOffsets);
+                currentOffsets.clear();
+            }
+
+            @Override
+            public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
+
+            }
+        });
+        // 拉取消息
+        ConsumerRecords<Object, Object> records = consumer.poll(Duration.ofMillis(100));
+        for (ConsumerRecord<Object, Object> record : records) {
+            currentOffsets.put(new TopicPartition(record.topic(), record.partition()), new OffsetAndMetadata(record.offset() + 1));
+        }
+        // 正常消费的异步提交位移
+        consumer.commitAsync(currentOffsets, null);
+    }
+
+    /**
+     * 多线程消费
+     * */
+    private void multiThreadConsumer() {
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 3, 0, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
+
+        Properties properties = initConfig();
+
+        for (int i = 0; i < 3; i++) {
+            executor.submit(new Runnable() {
+                @Override
+                public void run() {
+                    // 创建消费者
+                    KafkaConsumer<Object, Object> consumer = new KafkaConsumer<>(properties);
+                    // 订阅主题
+                    consumer.subscribe(Collections.singleton("topic-1"));
+                    try {
+                        while (true) {
+                            // 拉取消息
+                            ConsumerRecords<Object, Object> records = consumer.poll(Duration.ofMillis(100));
+                            // 处理消息
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    } finally {
+                        consumer.close();
+                    }
+                }
+            });
+        }
+    }
+
+    private final static Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
+
+    /**
+     * 多线程消费
+     * */
+    private void multiThreadConsumerProcess() {
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(
+                5,
+                5,
+                0,
+                TimeUnit.SECONDS,
+                new LinkedBlockingDeque<>(),
+                new ThreadPoolExecutor.CallerRunsPolicy()
+        );
+
+        Properties properties = initConfig();
+        // 创建消费者
+        KafkaConsumer<Object, Object> consumer = new KafkaConsumer<>(properties);
+        // 订阅主题
+        consumer.subscribe(Collections.singleton("topic-1"));
+        // 拉取消息
+        ConsumerRecords<Object, Object> records = consumer.poll(Duration.ofMillis(100));
+        // 每拉取到消息就发生给线程池处理
+        executor.submit(() -> processMessage(records, consumer));
+    }
+
+    private void processMessage(ConsumerRecords<Object, Object> records, KafkaConsumer<Object, Object> consumer) {
+        // 提交位移
+        synchronized (offsets) {
+            if (!offsets.isEmpty()) {
+                consumer.commitSync(offsets);
+                offsets.clear();
+            }
+        }
+        // 处理消息
+        for (TopicPartition partition : records.partitions()) {
+            List<ConsumerRecord<Object, Object>> recordList = records.records(partition);
+            long offset = recordList.get(recordList.size() - 1).offset();
+            // 对公共位移加锁
+            synchronized (offsets) {
+                // 如果不存在, 直接保存位移, 否则取出位移判断
+                if (offsets.containsKey(partition)) {
+                    offsets.put(partition, new OffsetAndMetadata(offset + 1));
+                } else {
+                    long p = offsets.get(partition).offset();
+                    if (p < offset + 1) {
+                        offsets.put(partition, new OffsetAndMetadata(offset + 1));
+                    }
+                }
+            }
+        }
     }
 }
