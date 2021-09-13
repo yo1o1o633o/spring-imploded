@@ -7,6 +7,7 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import java.util.Map;
 
 /**
+ * 生产者拦截器
  * @author shuai.yang
  */
 public class CustomProducerInterceptor implements ProducerInterceptor {

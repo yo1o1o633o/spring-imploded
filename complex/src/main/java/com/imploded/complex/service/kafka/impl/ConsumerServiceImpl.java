@@ -192,7 +192,14 @@ public class ConsumerServiceImpl implements ConsumerService {
      * 多线程消费
      * */
     private void multiThreadConsumer() {
-        ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 3, 0, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(
+                3,
+                3,
+                0,
+                TimeUnit.SECONDS,
+                new LinkedBlockingDeque<>(),
+                new ThreadPoolExecutor.CallerRunsPolicy()
+        );
 
         Properties properties = configService.initConsumerConfig();
 
@@ -220,7 +227,7 @@ public class ConsumerServiceImpl implements ConsumerService {
         }
     }
 
-    private final static Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
+    private final static Map<TopicPartition, OffsetAndMetadata> OFFSETS = new HashMap<>();
 
     /**
      * 多线程消费
@@ -248,10 +255,10 @@ public class ConsumerServiceImpl implements ConsumerService {
 
     private void processMessage(ConsumerRecords<Object, Object> records, KafkaConsumer<Object, Object> consumer) {
         // 提交位移
-        synchronized (offsets) {
-            if (!offsets.isEmpty()) {
-                consumer.commitSync(offsets);
-                offsets.clear();
+        synchronized (OFFSETS) {
+            if (!OFFSETS.isEmpty()) {
+                consumer.commitSync(OFFSETS);
+                OFFSETS.clear();
             }
         }
         // 处理消息
@@ -259,14 +266,14 @@ public class ConsumerServiceImpl implements ConsumerService {
             List<ConsumerRecord<Object, Object>> recordList = records.records(partition);
             long offset = recordList.get(recordList.size() - 1).offset();
             // 对公共位移加锁
-            synchronized (offsets) {
+            synchronized (OFFSETS) {
                 // 如果不存在, 直接保存位移, 否则取出位移判断
-                if (offsets.containsKey(partition)) {
-                    offsets.put(partition, new OffsetAndMetadata(offset + 1));
+                if (OFFSETS.containsKey(partition)) {
+                    OFFSETS.put(partition, new OffsetAndMetadata(offset + 1));
                 } else {
-                    long p = offsets.get(partition).offset();
+                    long p = OFFSETS.get(partition).offset();
                     if (p < offset + 1) {
-                        offsets.put(partition, new OffsetAndMetadata(offset + 1));
+                        OFFSETS.put(partition, new OffsetAndMetadata(offset + 1));
                     }
                 }
             }
