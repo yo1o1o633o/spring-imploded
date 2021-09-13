@@ -1,4 +1,4 @@
-package com.imploded.complex.service.kafka;
+package com.imploded.complex.service.kafka.common;
 
 import org.apache.kafka.clients.consumer.ConsumerInterceptor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -12,6 +12,7 @@ import java.util.Map;
 
 /**
  * 自定义消费者拦截器
+ * @author shuai.yang
  * */
 public class CustomConsumerInterceptor implements ConsumerInterceptor<String, String> {
     private static final long EXPIRE_INTERVAL = 10000;

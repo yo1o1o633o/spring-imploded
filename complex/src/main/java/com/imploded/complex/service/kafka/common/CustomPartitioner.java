@@ -1,4 +1,4 @@
-package com.imploded.complex.service.kafka;
+package com.imploded.complex.service.kafka.common;
 
 import org.apache.kafka.clients.producer.Partitioner;
 import org.apache.kafka.common.Cluster;

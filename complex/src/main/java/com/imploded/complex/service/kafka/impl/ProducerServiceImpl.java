@@ -1,12 +1,11 @@
 package com.imploded.complex.service.kafka.impl;
 
-import com.imploded.complex.service.kafka.CustomPartitioner;
-import com.imploded.complex.service.kafka.CustomProducerInterceptor;
+import com.imploded.complex.service.kafka.ConfigService;
 import com.imploded.complex.service.kafka.ProducerService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.header.Header;
-import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -23,12 +22,15 @@ import java.util.concurrent.TimeoutException;
 @Slf4j
 @Service
 public class ProducerServiceImpl implements ProducerService {
+    @Autowired
+    ConfigService configService;
+
     private KafkaProducer<String, String> kafkaProducer;
 
     @Override
     public void sendMessage() {
         // 初始化配置参数
-        Properties properties = initConfig();
+        Properties properties = configService.initProducerConfig();
         // 创建生产者实例, KafkaProducer是线程安全的
         this.kafkaProducer = new KafkaProducer<>(properties);
         // 创建一条消息
@@ -91,22 +93,6 @@ public class ProducerServiceImpl implements ProducerService {
                 }
             }
         });
-    }
-
-    private Properties initConfig() {
-        Properties properties = new Properties();
-        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "");
-        properties.put(ProducerConfig.CLIENT_ID_CONFIG, "");
-        // 重试次数, 对于可重试异常, 在此配置重复次数内自行恢复就不会抛出异常, 默认0
-        properties.put(ProducerConfig.RETRIES_CONFIG, 10);
-        // 默认序列化器, 可以自定义, 生产者和消费者的序列化器要保持一致
-        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        // 自定义分区器
-        properties.put(ProducerConfig.PARTITIONER_CLASS_CONFIG, CustomPartitioner.class.getName());
-        // 自定义拦截器
-        properties.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, CustomProducerInterceptor.class.getName());
-        return properties;
     }
 
     private ProducerRecord<String, String> initMessage() {

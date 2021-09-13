@@ -1,12 +1,13 @@
 package com.imploded.complex.service.kafka.impl;
 
-import com.imploded.complex.service.kafka.ConsumerRunning;
+import com.imploded.complex.service.kafka.ConfigService;
+import com.imploded.complex.service.kafka.common.ConsumerRunning;
 import com.imploded.complex.service.kafka.ConsumerService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
-import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -19,11 +20,13 @@ import java.util.concurrent.*;
 @Slf4j
 @Service
 public class ConsumerServiceImpl implements ConsumerService {
+    @Autowired
+    ConfigService configService;
 
     @Override
     public void receiveMessage() {
         // 初始化配置
-        Properties properties = initConfig();
+        Properties properties = configService.initConsumerConfig();
         // 创建一个消费者
         KafkaConsumer<Object, Object> consumer = new KafkaConsumer<>(properties);
         // 订阅主题
@@ -55,19 +58,6 @@ public class ConsumerServiceImpl implements ConsumerService {
                 }
             });
         }
-    }
-
-    private Properties initConfig() {
-        Properties properties = new Properties();
-        // 连接Kafka集群的Broker地址列表
-        properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9001");
-        properties.put(ConsumerConfig.CLIENT_ID_CONFIG, "");
-        // 相对生产者特有的参数, 消费组名称. 不能为空
-        properties.put(ConsumerConfig.GROUP_ID_CONFIG, "group_1");
-        properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
-        return properties;
     }
 
     /**
@@ -135,7 +125,7 @@ public class ConsumerServiceImpl implements ConsumerService {
      * 重置消费位移, 使消费者从指定的位移重新消费
      * */
     private void seekConsumer() {
-        Properties properties = initConfig();
+        Properties properties = configService.initConsumerConfig();
         // 创建消费者
         KafkaConsumer<Object, Object> consumer = new KafkaConsumer<>(properties);
         // 订阅主题
@@ -171,7 +161,7 @@ public class ConsumerServiceImpl implements ConsumerService {
     private void rebalanceConsumer() {
         // 保存消费位移
         Map<TopicPartition, OffsetAndMetadata> currentOffsets = new HashMap<>();
-        Properties properties = initConfig();
+        Properties properties = configService.initConsumerConfig();
         // 创建消费者
         KafkaConsumer<Object, Object> consumer = new KafkaConsumer<>(properties);
         // 订阅主题并添加再均衡监听器
@@ -204,7 +194,7 @@ public class ConsumerServiceImpl implements ConsumerService {
     private void multiThreadConsumer() {
         ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 3, 0, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
 
-        Properties properties = initConfig();
+        Properties properties = configService.initConsumerConfig();
 
         for (int i = 0; i < 3; i++) {
             executor.submit(new Runnable() {
@@ -245,7 +235,7 @@ public class ConsumerServiceImpl implements ConsumerService {
                 new ThreadPoolExecutor.CallerRunsPolicy()
         );
 
-        Properties properties = initConfig();
+        Properties properties = configService.initConsumerConfig();
         // 创建消费者
         KafkaConsumer<Object, Object> consumer = new KafkaConsumer<>(properties);
         // 订阅主题

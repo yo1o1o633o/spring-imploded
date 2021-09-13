@@ -1,8 +1,10 @@
-package com.imploded.complex.service.kafka;
+package com.imploded.complex.service.kafka.common;
 
-import lombok.Data;
-
+/**
+ * @author shuai.yang
+ */
 public class ConsumerRunning {
+
     private static Boolean running = true;
 
     public static Boolean getRunning() {

@@ -1,4 +1,4 @@
-package com.imploded.complex.service.kafka;
+package com.imploded.complex.service.kafka.common;
 
 import org.apache.kafka.clients.producer.ProducerInterceptor;
 import org.apache.kafka.clients.producer.ProducerRecord;
