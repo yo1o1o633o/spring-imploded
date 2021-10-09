@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    druid:
+      url: jdbc:mysql://cdb-l5joap4d.gz.tencentcdb.com:10030/su_blog
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      username: root
+      password: Yang497843o7
+      #最大连接池数量
+      max-active: 100
+      #初始连接池数量
+      initial-size: 0
+      # true非公平锁， 提高并发效率
+      use-unfair-lock: true
+      #获取连接时最大等待时间，单位毫秒
+      max-wait: 60000
+      #最小连接池数量
+      min-idle: 0

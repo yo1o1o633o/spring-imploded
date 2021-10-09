@@ -1,10 +1,10 @@
-package com.imploded.thread.configuration;
-
-import java.util.concurrent.*;
+package com.imploded.complex.configuration;
 
 import org.springframework.core.task.TaskDecorator;
-
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * @author shuai.yang

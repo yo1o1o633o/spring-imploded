@@ -1,6 +1,4 @@
-package com.imploded.thread.service;
-
-import org.springframework.stereotype.Service;
+package com.imploded.complex.service;
 
 import java.util.concurrent.*;
 
