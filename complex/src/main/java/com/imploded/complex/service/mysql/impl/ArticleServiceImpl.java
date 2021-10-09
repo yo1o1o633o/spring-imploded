@@ -1,8 +1,8 @@
-package com.imploded.complex.service.impl;
+package com.imploded.complex.service.mysql.impl;
 
 import com.imploded.complex.entity.Article;
 import com.imploded.complex.repository.ArticleRepository;
-import com.imploded.complex.service.ArticleService;
+import com.imploded.complex.service.mysql.ArticleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

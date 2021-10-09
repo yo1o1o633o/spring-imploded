@@ -1,6 +1,6 @@
 package com.imploded.complex.controller;
 
-import com.imploded.complex.service.ArticleService;
+import com.imploded.complex.service.mysql.ArticleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

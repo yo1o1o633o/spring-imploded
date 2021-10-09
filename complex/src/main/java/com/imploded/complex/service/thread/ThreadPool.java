@@ -1,4 +1,4 @@
-package com.imploded.complex.service;
+package com.imploded.complex.service.thread;
 
 import java.util.concurrent.*;
 
@@ -12,7 +12,7 @@ import java.util.concurrent.*;
  *
  * @author shuai.yang
  */
-public class CacheServiceImpl {
+public class ThreadPool {
 
     public static void main(String[] args) {
         createCustomThreadPool();
