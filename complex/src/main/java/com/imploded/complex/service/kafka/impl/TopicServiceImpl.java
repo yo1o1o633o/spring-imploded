@@ -3,6 +3,9 @@ package com.imploded.complex.service.kafka.impl;
 import com.imploded.complex.service.kafka.TopicService;
 import kafka.admin.TopicCommand;
 
+/**
+ * @author shuai.yang
+ */
 public class TopicServiceImpl implements TopicService {
 
     @Override
