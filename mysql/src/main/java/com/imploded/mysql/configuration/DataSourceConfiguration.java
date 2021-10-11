@@ -12,6 +12,9 @@ import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.*;
 
+/**
+ * @author shuai.yang
+ */
 public class DataSourceConfiguration {
 
     public DataSource shardDataSource() throws SQLException {

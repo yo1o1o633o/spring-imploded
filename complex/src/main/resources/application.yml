@@ -1,10 +1,10 @@
 spring:
   datasource:
     druid:
-      url: jdbc:mysql://cdb-l5joap4d.gz.tencentcdb.com:10030/su_blog
+      url: jdbc:mysql://10.50.3.116:3306/t8t_ad_cms
       driver-class-name: com.mysql.cj.jdbc.Driver
-      username: root
-      password: Yang497843o7
+      username: crm
+      password: 123456
       #最大连接池数量
       max-active: 100
       #初始连接池数量
