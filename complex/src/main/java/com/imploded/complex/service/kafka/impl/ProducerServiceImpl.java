@@ -1,15 +1,13 @@
 package com.imploded.complex.service.kafka.impl;
 
 import com.imploded.complex.service.kafka.ConfigService;
+import com.imploded.complex.service.kafka.MessageService;
 import com.imploded.complex.service.kafka.ProducerService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.*;
-import org.apache.kafka.common.header.Header;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -24,26 +22,24 @@ import java.util.concurrent.TimeoutException;
 public class ProducerServiceImpl implements ProducerService {
     @Autowired
     ConfigService configService;
+    @Autowired
+    MessageService messageService;
 
     private KafkaProducer<String, String> kafkaProducer;
 
-    @Override
-    public void sendMessage() {
+    public ProducerServiceImpl() {
         // 初始化配置参数
         Properties properties = configService.initProducerConfig();
         // 创建生产者实例, KafkaProducer是线程安全的
         this.kafkaProducer = new KafkaProducer<>(properties);
+    }
+
+    @Override
+    public void sendMessage() {
         // 创建一条消息
-        ProducerRecord<String, String> record = initMessage();
+        ProducerRecord<String, String> record = messageService.makeMessage();
         // 发后即忘
         kafkaProducer.send(record);
-        // 同步发送(Sync)
-        syncSendMessage(record);
-        // 同步发送(Sync), 获取返回值
-        RecordMetadata recordMetadata = syncSendMessageResult(record);
-        log.info("同步发送消息, 返回元数据信息: {}", recordMetadata);
-        // 异步发送
-        asyncSendMessage(record);
         // 关闭生产者实例, 回收资源
         kafkaProducer.close();
     }
@@ -51,64 +47,76 @@ public class ProducerServiceImpl implements ProducerService {
     /**
      * 同步发送
      * */
-    private void syncSendMessage(ProducerRecord<String, String> record) {
+    @Override
+    public void syncSendMessage() {
+        // 创建一条消息
+        ProducerRecord<String, String> record = messageService.makeMessage();
         // 同步发送(Sync), 可靠性高, 可捕获发生过程中的异常, 性能较差
         try {
             kafkaProducer.send(record).get();
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
+        // 关闭生产者实例, 回收资源
+        kafkaProducer.close();
     }
 
     /**
      * 同步发送, 阻塞获取返回的元数据
      * */
-    private RecordMetadata syncSendMessageResult(ProducerRecord<String, String> record) {
+    @Override
+    public RecordMetadata syncSendMessageResult() {
+        // 创建一条消息
+        ProducerRecord<String, String> record = messageService.makeMessage();
         // 获取发送元数据信息, 返回一个Future对象, 支持Future的特性, 如超时获取
         Future<RecordMetadata> future = kafkaProducer.send(record);
         try {
-            RecordMetadata metadata = future.get();
-            // 指定超时时间的获取
-            RecordMetadata metadataTimeOut = future.get(1000, TimeUnit.SECONDS);
-            return metadata;
-        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
+        // 关闭生产者实例, 回收资源
+        kafkaProducer.close();
         return null;
     }
 
     /**
-     * 异步发送, 增加回调函数处理发送状态
+     * 同步发送, 阻塞获取返回的元数据(指定阻塞超时时间)
      * */
-    private void asyncSendMessage(ProducerRecord<String, String> record) {
-        // 异步发送(Async), 增加回调函数在消息发送之后回调发送状态, 成功或者异常. 异步回调也可以保证分区有序性
-        kafkaProducer.send(record, new Callback() {
-            // RecordMetadata和Exception互斥, 成功则Exception为NULL, RecordMetadata不为NULL, 异常则Exception不为NULL, RecordMetadata为NULL
-            @Override
-            public void onCompletion(RecordMetadata metadata, Exception exception) {
-                if (exception != null) {
-                    exception.printStackTrace();
-                } else {
-                    System.out.println("消息发送成功");
-                }
-            }
-        });
+    @Override
+    public RecordMetadata syncSendMessageResultTimeOut() {
+        // 创建一条消息
+        ProducerRecord<String, String> record = messageService.makeMessage();
+        // 获取发送元数据信息, 返回一个Future对象, 支持Future的特性, 如超时获取
+        Future<RecordMetadata> future = kafkaProducer.send(record);
+        try {
+            // 指定超时时间的获取
+            return future.get(1000, TimeUnit.SECONDS);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            e.printStackTrace();
+        }
+        // 关闭生产者实例, 回收资源
+        kafkaProducer.close();
+        return null;
     }
 
-    private ProducerRecord<String, String> initMessage() {
-        // 消息头
-        List<Header> headers = new ArrayList<>();
-        // 指定消息发往的主题
-        String topic = "topic-1";
-        // 指定消息发往的分区
-        Integer partition = 1;
-        // 时间戳
-        Long timestamp = 100L;
-        // 消息KEY
-        String key = "key-one";
-        // 消息内容
-        String value = "Hello World!";
-        // 多个构造方法, 其他构造方法内部都是调用此构造方法, 其他入参不传按NULL处理
-        return new ProducerRecord<>(topic, partition, timestamp, key, value, headers);
+    /**
+     * 异步发送, 增加回调函数处理发送状态, new Callback()
+     * */
+    @Override
+    public void asyncSendMessage() {
+        // 创建一条消息
+        ProducerRecord<String, String> record = messageService.makeMessage();
+        // 异步发送(Async), 增加回调函数在消息发送之后回调发送状态, 成功或者异常. 异步回调也可以保证分区有序性
+        // RecordMetadata和Exception互斥, 成功则Exception为NULL, RecordMetadata不为NULL, 异常则Exception不为NULL, RecordMetadata为NULL
+        kafkaProducer.send(record, (metadata, exception) -> {
+            if (exception != null) {
+                exception.printStackTrace();
+            } else {
+                System.out.println("消息发送成功");
+            }
+        });
+        // 关闭生产者实例, 回收资源
+        kafkaProducer.close();
     }
 }
