@@ -27,15 +27,18 @@ public class ProducerServiceImpl implements ProducerService {
 
     private KafkaProducer<String, String> kafkaProducer;
 
-    public ProducerServiceImpl() {
+    private void initProducer() {
         // 初始化配置参数
         Properties properties = configService.initProducerConfig();
         // 创建生产者实例, KafkaProducer是线程安全的
-        this.kafkaProducer = new KafkaProducer<>(properties);
+        if (kafkaProducer == null) {
+            this.kafkaProducer = new KafkaProducer<>(properties);
+        }
     }
 
     @Override
     public void sendMessage() {
+        initProducer();
         // 创建一条消息
         ProducerRecord<String, String> record = messageService.makeMessage();
         // 发后即忘

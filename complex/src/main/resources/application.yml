@@ -15,3 +15,7 @@ spring:
       max-wait: 60000
       #最小连接池数量
       min-idle: 0
+  redis:
+    url: redis://127.0.0.1:16379
+server:
+  port: 15000
