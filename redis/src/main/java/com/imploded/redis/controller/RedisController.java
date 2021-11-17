@@ -1,7 +1,7 @@
-package com.imploded.complex.controller;
+package com.imploded.redis.controller;
 
-import com.imploded.complex.service.redis.DemoService;
-import com.imploded.complex.service.redis.ValueToHashService;
+import com.imploded.redis.service.DemoService;
+import com.imploded.redis.service.ValueToHashService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
