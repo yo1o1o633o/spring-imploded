@@ -1,0 +1,17 @@
+spring:
+  redis:
+    cluster:
+      nodes: 192.168.80.128:7000,192.168.80.128:7001,192.168.80.128:7002,192.168.80.128:7003,192.168.80.128:7004,192.168.80.128:7005
+      max-redirects: 5
+    lettuce:
+      cluster:
+        refresh:
+          adaptive: true
+#      pool:
+#        max-active: 64
+#        max-idle: 16
+#        min-idle: 0
+#        max-wait: 60000ms
+#      shutdown-timeout: 100ms
+server:
+  port: 15001
