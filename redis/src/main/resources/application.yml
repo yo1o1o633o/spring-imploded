@@ -7,6 +7,8 @@ spring:
       cluster:
         refresh:
           adaptive: true
+          period: 10
+          dynamic-refresh-sources: true
 #      pool:
 #        max-active: 64
 #        max-idle: 16

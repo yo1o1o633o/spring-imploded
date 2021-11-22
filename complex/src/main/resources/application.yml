@@ -1,9 +1,9 @@
 spring:
   datasource:
     druid:
-      url: jdbc:mysql://10.50.3.116:3306/t8t_ad_cms
+      url: jdbc:mysql://192.168.80.133:3306/car
       driver-class-name: com.mysql.cj.jdbc.Driver
-      username: crm
+      username: root
       password: 123456
       #最大连接池数量
       max-active: 100
@@ -16,6 +16,6 @@ spring:
       #最小连接池数量
       min-idle: 0
   redis:
-    url: redis://127.0.0.1:16379
+    url: redis://192.168.80.128:6379
 server:
   port: 15000
