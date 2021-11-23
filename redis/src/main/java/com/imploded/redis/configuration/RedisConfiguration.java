@@ -5,6 +5,7 @@ import io.lettuce.core.cluster.ClusterClientOptions;
 import io.lettuce.core.cluster.ClusterTopologyRefreshOptions;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,10 +13,8 @@ import org.springframework.data.redis.connection.RedisClusterConfiguration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisNode;
 import org.springframework.data.redis.connection.RedisPassword;
-import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettucePoolingClientConfiguration;
-import org.springframework.data.redis.core.ClusterOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
@@ -34,7 +33,7 @@ public class RedisConfiguration {
     RedisProperties redisProperties;
 
     @Bean
-    public RedisTemplate<String, ?> getRedisTemplate(RedisConnectionFactory factory) {
+    public RedisTemplate<String, ?> getRedisTemplate(@Qualifier("lettuceConnectionFactory") RedisConnectionFactory factory) {
         RedisTemplate<String, ?> template = new RedisTemplate<>();
         template.setKeySerializer(new StringRedisSerializer());
         template.setHashKeySerializer(new StringRedisSerializer());
@@ -45,10 +44,11 @@ public class RedisConfiguration {
         return template;
     }
 
+    @Bean
     public LettuceConnectionFactory lettuceConnectionFactory() {
         List<String> clusterNodes  = redisProperties.getCluster().getNodes();
         Set<RedisNode> nodes = new HashSet<>();
-        clusterNodes .forEach(address -> nodes.add(new RedisNode(address.split(":")[0].trim(), Integer.parseInt(address.split(":")[1].trim()))));
+        clusterNodes.forEach(address -> nodes.add(new RedisNode(address.split(":")[0].trim(), Integer.parseInt(address.split(":")[1].trim()))));
         RedisClusterConfiguration redisClusterConfiguration = new RedisClusterConfiguration();
         redisClusterConfiguration.setClusterNodes(nodes);
         redisClusterConfiguration.setPassword(RedisPassword.of(redisProperties.getPassword()));

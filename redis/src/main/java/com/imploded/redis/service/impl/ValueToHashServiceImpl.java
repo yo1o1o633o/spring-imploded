@@ -22,9 +22,12 @@ public class ValueToHashServiceImpl implements ValueToHashService {
     @Override
     public void makeValueData() {
         for (int i = 0; i < 10000000; i++) {
-            redisTemplate.opsForValue().set("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" + i, 1);
-            if (i % 1000 == 0) {
-                log.info("写入完成: {}", i);
+            redisTemplate.opsForValue().set("BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" + i, 1);
+            log.info("写入完成: {}", i);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }
