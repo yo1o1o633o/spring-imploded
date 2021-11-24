@@ -1,5 +1,10 @@
 package com.imploded.async.service.thread;
 
 public interface ThreadLocalService {
-    void test();
+
+    void singleThread();
+
+    void childThread();
+
+    void poolThread() throws InterruptedException;
 }

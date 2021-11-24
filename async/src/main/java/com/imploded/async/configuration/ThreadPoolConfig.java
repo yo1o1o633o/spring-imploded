@@ -19,11 +19,11 @@ public class ThreadPoolConfig {
     public Executor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         //核心线程池大小
-        executor.setCorePoolSize(5);
+        executor.setCorePoolSize(1);
         //最大线程数
-        executor.setMaxPoolSize(10);
+        executor.setMaxPoolSize(1);
         //队列容量
-        executor.setQueueCapacity(20);
+        executor.setQueueCapacity(1);
         //活跃时间
         executor.setKeepAliveSeconds(1000);
         //线程名字前缀

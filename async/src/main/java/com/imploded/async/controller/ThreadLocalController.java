@@ -11,8 +11,18 @@ public class ThreadLocalController {
     @Autowired
     ThreadLocalService threadLocalService;
 
-    @RequestMapping("/thread/local/test")
-    public void getArticleList() {
-        threadLocalService.test();
+    @RequestMapping("/thread/single")
+    public void singleThread() {
+        threadLocalService.singleThread();
+    }
+
+    @RequestMapping("/thread/child")
+    public void childThread() {
+        threadLocalService.childThread();
+    }
+
+    @RequestMapping("/thread/pool")
+    public void poolThread() throws InterruptedException {
+        threadLocalService.poolThread();
     }
 }
